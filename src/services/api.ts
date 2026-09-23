@@ -43,12 +43,15 @@ class ApiService {
   private getHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...extraHeaders,
     };
     if (this.secretKey) {
       headers["Authorization"] = `Bearer ${this.secretKey}`;
     }
-    return headers;
+    // extraHeaders must override default headers (e.g. client API key overrides management key)
+    return {
+      ...headers,
+      ...extraHeaders,
+    };
   }
 
   private buildUrl(path: string): string {
@@ -260,8 +263,24 @@ class ApiService {
   }
 
   // Models list
-  async listModels(): Promise<ModelsResponse> {
-    const res = await this.request<ModelsResponse>("/v1/models");
+  async listModels(clientApiKey?: string): Promise<ModelsResponse> {
+    let keyToUse = clientApiKey?.trim() || localStorage.getItem("cpa_playground_key") || "";
+    if (!keyToUse || keyToUse === this.secretKey) {
+      try {
+        const keys = await this.getAPIKeys();
+        if (keys && keys.length > 0) {
+          keyToUse = keys[0];
+          localStorage.setItem("cpa_playground_key", keyToUse);
+        }
+      } catch {}
+    }
+
+    const headers: Record<string, string> = {};
+    if (keyToUse) {
+      headers["Authorization"] = `Bearer ${keyToUse}`;
+    }
+
+    const res = await this.request<ModelsResponse>("/v1/models", { headers });
     return res.data;
   }
 
@@ -336,5 +355,7 @@ class ApiService {
 }
 
 export const api = new ApiService();
+
+
 
 

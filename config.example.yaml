@@ -1,0 +1,31 @@
+# Server host/interface to bind to. Default is empty ("") to bind all interfaces.
+host: ""
+port: 8317
+
+# IP addresses or CIDRs of proxies allowed to supply forwarded client IP headers.
+trusted-proxies: []
+
+# Management API settings (required for cliproxy-dashboard)
+remote-management:
+  allow-remote: true
+  secret-key: "123456"
+
+# Downstream client API keys (for Cursor, Claude Code, Continue, etc.)
+api-keys:
+  - "sk-cpa-your-custom-key"
+
+# Enable debug logging
+debug: false
+
+# Outbound proxy URL (if upstream AI services like Google/Anthropic are blocked in your network)
+# Outbound proxy URL (default is empty for direct connection)
+# Example: "http://127.0.0.1:7890" or "socks5://127.0.0.1:10808"
+proxy-url: ""
+
+# Routing & load balancing strategy
+routing:
+  strategy: "round-robin"
+
+# Auth directory
+auth-dir: "~/.cli-proxy-api"
+

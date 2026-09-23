@@ -1,7 +1,10 @@
+import { AccountModal } from "./components/AccountModal";
 import React, { useState } from "react";
+import { I18nProvider } from "./i18n";
 import { AppProvider, useApp } from "./context/AppContext";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
+import { LoginPage } from "./components/LoginPage";
 import { ConnectionModal } from "./components/ConnectionModal";
 import { ToastContainer } from "./components/ToastContainer";
 import { OverviewTab } from "./components/tabs/OverviewTab";
@@ -25,21 +28,36 @@ const MainLayout: React.FC = () => {
 
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-6xl mx-auto">
-            {activeTab === "overview" && (
+            {/* Keep all tabs mounted in DOM to preserve inputs, streams, and state */}
+            <div className={activeTab === "overview" ? "block" : "hidden"}>
               <OverviewTab onOpenOAuthModal={() => setIsOAuthModalOpen(true)} />
-            )}
-            {activeTab === "accounts" && (
+            </div>
+
+            <div className={activeTab === "accounts" ? "block" : "hidden"}>
               <AccountsTab onOpenOAuthModal={() => setIsOAuthModalOpen(true)} />
-            )}
-            {activeTab === "routing" && <RoutingTab />}
-            {activeTab === "keys" && <ApiKeysTab />}
-            {activeTab === "playground" && <PlaygroundTab />}
-            {activeTab === "config" && <ConfigTab />}
+            </div>
+
+            <div className={activeTab === "routing" ? "block" : "hidden"}>
+              <RoutingTab />
+            </div>
+
+            <div className={activeTab === "keys" ? "block" : "hidden"}>
+              <ApiKeysTab />
+            </div>
+
+            <div className={activeTab === "playground" ? "block" : "hidden"}>
+              <PlaygroundTab />
+            </div>
+
+            <div className={activeTab === "config" ? "block" : "hidden"}>
+              <ConfigTab />
+            </div>
           </div>
         </main>
       </div>
 
       <ConnectionModal />
+      <AccountModal />
       <OAuthModal
         isOpen={isOAuthModalOpen}
         onClose={() => setIsOAuthModalOpen(false)}
@@ -49,12 +67,30 @@ const MainLayout: React.FC = () => {
   );
 };
 
+const AppContent: React.FC = () => {
+  const { isAuthenticated } = useApp();
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginPage />
+        <ToastContainer />
+      </>
+    );
+  }
+
+  return <MainLayout />;
+};
+
 export const App: React.FC = () => {
   return (
-    <AppProvider>
-      <MainLayout />
-    </AppProvider>
+    <I18nProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </I18nProvider>
   );
 };
 
 export default App;
+

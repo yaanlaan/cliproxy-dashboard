@@ -1,5 +1,6 @@
 import React from "react";
 import { useApp, TabType } from "../context/AppContext";
+import { useI18n } from "../i18n";
 import {
   LayoutDashboard,
   Users,
@@ -13,44 +14,45 @@ import {
 
 interface NavItem {
   id: TabType;
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: number | string;
 }
 
 export const Sidebar: React.FC = () => {
   const { activeTab, setActiveTab, authFiles } = useApp();
+  const { t } = useI18n();
 
   const navItems: NavItem[] = [
     {
       id: "overview",
-      label: "仪表盘概览",
+      labelKey: "nav.overview",
       icon: LayoutDashboard,
     },
     {
       id: "accounts",
-      label: "账号与凭据池",
+      labelKey: "nav.accounts",
       icon: Users,
       badge: authFiles.length > 0 ? authFiles.length : undefined,
     },
     {
       id: "routing",
-      label: "路由与模型映射",
+      labelKey: "nav.routing",
       icon: GitBranch,
     },
     {
       id: "keys",
-      label: "客户端接入 Keys",
+      labelKey: "nav.keys",
       icon: KeyRound,
     },
     {
       id: "playground",
-      label: "API 在线测试",
+      labelKey: "nav.playground",
       icon: PlaySquare,
     },
     {
       id: "config",
-      label: "系统配置 (YAML)",
+      labelKey: "nav.config",
       icon: Sliders,
     },
   ];
@@ -59,7 +61,7 @@ export const Sidebar: React.FC = () => {
     <aside className="w-64 border-r border-slate-800/80 bg-slate-900/40 flex flex-col justify-between shrink-0">
       <div className="p-4 space-y-1">
         <div className="px-3 py-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-          功能导航
+          {t("nav.navTitle")}
         </div>
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -78,7 +80,7 @@ export const Sidebar: React.FC = () => {
                 <Icon
                   className={`w-4 h-4 transition ${isActive ? "text-brand-400" : "text-slate-400"}`}
                 />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </div>
               {item.badge !== undefined && (
                 <span
@@ -96,26 +98,27 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-            <div className="p-4 border-t border-slate-800/60 space-y-2">
+      <div className="p-4 border-t border-slate-800/60 space-y-2">
         <a
-          href="https://help.router-for-me/cn/"
+          href="https://github.com/router-for-me/CLIProxyAPI/blob/main/README_CN.md"
           target="_blank"
           rel="noreferrer"
           className="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition"
+          title="GitHub 完整中文手册"
         >
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-slate-500" />
-            <span>官方中文文档</span>
+            <span>{t("nav.docs")}</span>
           </div>
           <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
         </a>
 
         <div className="px-3 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] space-y-1.5">
           <div className="flex justify-between items-center text-slate-500 text-[10px] uppercase tracking-wider font-semibold">
-            <span>开源项目链接</span>
+            <span>{t("nav.links")}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 text-xs">控制台前端</span>
+            <span className="text-slate-400 text-xs">{t("nav.repoWeb")}</span>
             <a
               href="https://github.com/yaanlaan/cliproxy-dashboard"
               target="_blank"
@@ -127,7 +130,7 @@ export const Sidebar: React.FC = () => {
             </a>
           </div>
           <div className="flex items-center justify-between pt-1 border-t border-slate-900">
-            <span className="text-slate-500 text-[11px]">核心代理端</span>
+            <span className="text-slate-500 text-[11px]">{t("nav.repoCore")}</span>
             <a
               href="https://github.com/router-for-me/CLIProxyAPI"
               target="_blank"
@@ -143,4 +146,3 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
-

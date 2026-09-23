@@ -1,0 +1,39 @@
+services:
+  # 1. Backend: CLIProxyAPI Core Proxy Server
+  cli-proxy-api:
+    image: eceasy/cli-proxy-api:latest
+    container_name: cli-proxy-api
+    ports:
+      - "8317:8317"
+      # OAuth callback ports (required for web oauth redirects)
+      - "1455:1455"
+      - "54545:54545"
+      - "51121:51121"
+      - "11451:11451"
+    volumes:
+      - ./config.yaml:/CLIProxyAPI/config.yaml
+      - ./auths:/root/.cli-proxy-api
+      - ./logs:/CLIProxyAPI/logs
+    restart: unless-stopped
+    networks:
+      - cpa-network
+
+  # 2. Frontend: CLIProxy Dashboard Web Console
+  cliproxy-dashboard:
+    build: .
+    image: cliproxy-dashboard:latest
+    container_name: cliproxy-dashboard
+    ports:
+      - "12345:80"
+    environment:
+      - BACKEND_HOST=cli-proxy-api
+      - BACKEND_PORT=8317
+    depends_on:
+      - cli-proxy-api
+    restart: unless-stopped
+    networks:
+      - cpa-network
+
+networks:
+  cpa-network:
+    driver: bridge

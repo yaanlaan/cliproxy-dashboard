@@ -1,5 +1,7 @@
 import React from "react";
 import { useApp } from "../../context/AppContext";
+import { useI18n } from "../../i18n";
+import { TrafficAnalyticsChart } from "../TrafficAnalyticsChart";
 import {
   Users,
   CheckCircle2,
@@ -17,6 +19,7 @@ import {
 export const OverviewTab: React.FC<{ onOpenOAuthModal: () => void }> = ({ onOpenOAuthModal }) => {
   const { authFiles, isConnected, latencyMs, versionInfo, setActiveTab, secretKey, setIsConnectionModalOpen } =
     useApp();
+  const { t } = useI18n();
 
   const totalAccounts = authFiles.length;
   const activeAccounts = authFiles.filter(
@@ -42,15 +45,16 @@ export const OverviewTab: React.FC<{ onOpenOAuthModal: () => void }> = ({ onOpen
           <div className="flex items-center gap-3">
             <ShieldAlert className="w-5 h-5 shrink-0 text-amber-400" />
             <div className="text-xs">
-              <span className="font-semibold text-amber-200">未设置 Management Secret Key：</span>
-              管理接口（/v0/management/*）需要配置密钥以获取账号与系统配置。
+              <span className="font-semibold text-amber-200">
+                {t("overview.noSecretWarning")}
+              </span>
             </div>
           </div>
           <button
             onClick={() => setIsConnectionModalOpen(true)}
             className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-medium transition"
           >
-            立即设置
+            {t("overview.setNow")}
           </button>
         </div>
       )}
@@ -59,48 +63,51 @@ export const OverviewTab: React.FC<{ onOpenOAuthModal: () => void }> = ({ onOpen
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm relative overflow-hidden group hover:border-slate-700 transition">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-slate-400">总账号数</span>
+            <span className="text-xs font-medium text-slate-400">{t("overview.totalAccounts")}</span>
             <div className="p-2 rounded-xl bg-brand-500/10 text-brand-400">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-bold text-white mb-1">{totalAccounts}</div>
-          <p className="text-xs text-slate-500">已载入凭据池的总授权凭据</p>
+          <p className="text-xs text-slate-500">{t("overview.totalAccountsDesc")}</p>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm relative overflow-hidden group hover:border-slate-700 transition">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-slate-400">活跃可用</span>
+            <span className="text-xs font-medium text-slate-400">{t("overview.activeAccounts")}</span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-bold text-emerald-400 mb-1">{activeAccounts}</div>
-          <p className="text-xs text-slate-500">随时可供负载均衡调用的正常凭据</p>
+          <p className="text-xs text-slate-500">{t("overview.activeAccountsDesc")}</p>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm relative overflow-hidden group hover:border-slate-700 transition">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-slate-400">冷却中 (Cooldown)</span>
+            <span className="text-xs font-medium text-slate-400">{t("overview.cooldownAccounts")}</span>
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
               <Clock className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-bold text-amber-400 mb-1">{cooldownAccounts}</div>
-          <p className="text-xs text-slate-500">因触发限流临时避让，等待解冻</p>
+          <p className="text-xs text-slate-500">{t("overview.cooldownAccountsDesc")}</p>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm relative overflow-hidden group hover:border-slate-700 transition">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-slate-400">不可用 / 异常</span>
+            <span className="text-xs font-medium text-slate-400">{t("overview.errorAccounts")}</span>
             <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-bold text-rose-400 mb-1">{disabledOrError}</div>
-          <p className="text-xs text-slate-500">配额耗尽、被禁用或 Token 失效</p>
+          <p className="text-xs text-slate-500">{t("overview.errorAccountsDesc")}</p>
         </div>
       </div>
+
+      {/* Traffic Analytics Chart Card */}
+      <TrafficAnalyticsChart authFiles={authFiles} />
 
       {/* Main Content Grid: System Info & Providers Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -111,25 +118,25 @@ export const OverviewTab: React.FC<{ onOpenOAuthModal: () => void }> = ({ onOpen
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-brand-400" />
-                <h3 className="font-semibold text-white text-sm">提供商账号池分布</h3>
+                <h3 className="font-semibold text-white text-sm">{t("overview.providerDist")}</h3>
               </div>
               <button
                 onClick={() => setActiveTab("accounts")}
                 className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 transition"
               >
-                查看全部账号 <ArrowRight className="w-3.5 h-3.5" />
+                {t("overview.viewAll")} <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {totalAccounts === 0 ? (
               <div className="py-8 text-center border border-dashed border-slate-800 rounded-xl">
                 <Users className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                <p className="text-xs text-slate-400 mb-3">当前账号池为空</p>
+                <p className="text-xs text-slate-400 mb-3">{t("overview.emptyPool")}</p>
                 <button
                   onClick={onOpenOAuthModal}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium transition"
                 >
-                  <Zap className="w-3.5 h-3.5" /> 添加第一个账号 (OAuth 授权)
+                  <Zap className="w-3.5 h-3.5" /> {t("overview.addFirstAccount")}
                 </button>
               </div>
             ) : (
@@ -155,10 +162,10 @@ export const OverviewTab: React.FC<{ onOpenOAuthModal: () => void }> = ({ onOpen
                         <span className="capitalize text-xs font-semibold text-slate-200 block">
                           {provider}
                         </span>
-                        <span className="text-[11px] text-slate-500">已授权凭据</span>
+                        <span className="text-[11px] text-slate-500">{t("overview.authorizedCreds")}</span>
                       </div>
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${badgeColor}`}>
-                        {count} 个
+                        {count}
                       </span>
                     </div>
                   );
@@ -169,15 +176,15 @@ export const OverviewTab: React.FC<{ onOpenOAuthModal: () => void }> = ({ onOpen
 
           {/* Quick Actions */}
           <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80">
-            <h3 className="font-semibold text-white text-sm mb-4">快捷操作</h3>
+            <h3 className="font-semibold text-white text-sm mb-4">{t("overview.quickActions")}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 onClick={onOpenOAuthModal}
                 className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-brand-500/50 hover:bg-slate-900 transition text-left group"
               >
                 <Zap className="w-5 h-5 text-brand-400 mb-2 group-hover:scale-110 transition" />
-                <div className="text-xs font-semibold text-slate-200 mb-0.5">新增 OAuth 账号</div>
-                <div className="text-[11px] text-slate-500">Claude / Codex / Gemini 等授权</div>
+                <div className="text-xs font-semibold text-slate-200 mb-0.5">{t("overview.qaOAuthTitle")}</div>
+                <div className="text-[11px] text-slate-500">{t("overview.qaOAuthDesc")}</div>
               </button>
 
               <button
@@ -185,8 +192,8 @@ export const OverviewTab: React.FC<{ onOpenOAuthModal: () => void }> = ({ onOpen
                 className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-brand-500/50 hover:bg-slate-900 transition text-left group"
               >
                 <Key className="w-5 h-5 text-emerald-400 mb-2 group-hover:scale-110 transition" />
-                <div className="text-xs font-semibold text-slate-200 mb-0.5">客户端接入 API Key</div>
-                <div className="text-[11px] text-slate-500">配置 Cursor / Continue 调用</div>
+                <div className="text-xs font-semibold text-slate-200 mb-0.5">{t("overview.qaKeyTitle")}</div>
+                <div className="text-[11px] text-slate-500">{t("overview.qaKeyDesc")}</div>
               </button>
 
               <button
@@ -194,8 +201,8 @@ export const OverviewTab: React.FC<{ onOpenOAuthModal: () => void }> = ({ onOpen
                 className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-brand-500/50 hover:bg-slate-900 transition text-left group"
               >
                 <Flame className="w-5 h-5 text-purple-400 mb-2 group-hover:scale-110 transition" />
-                <div className="text-xs font-semibold text-slate-200 mb-0.5">在线连通性测试</div>
-                <div className="text-[11px] text-slate-500">即时验证模型输出与流式响应</div>
+                <div className="text-xs font-semibold text-slate-200 mb-0.5">{t("overview.qaPlaygroundTitle")}</div>
+                <div className="text-[11px] text-slate-500">{t("overview.qaPlaygroundDesc")}</div>
               </button>
             </div>
           </div>
@@ -206,47 +213,47 @@ export const OverviewTab: React.FC<{ onOpenOAuthModal: () => void }> = ({ onOpen
           <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
             <div className="flex items-center gap-2">
               <Server className="w-4 h-4 text-brand-400" />
-              <h3 className="font-semibold text-white text-sm">运行环境与状态</h3>
+              <h3 className="font-semibold text-white text-sm">{t("overview.envStatus")}</h3>
             </div>
 
             <div className="space-y-3 text-xs">
               <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">服务通信状态</span>
+                <span className="text-slate-400">{t("overview.commStatus")}</span>
                 <span className={`font-medium ${isConnected ? "text-emerald-400" : "text-rose-400"}`}>
-                  {isConnected ? "正常通信" : "连接失败"}
+                  {isConnected ? t("overview.commNormal") : t("overview.commFailed")}
                 </span>
               </div>
 
               <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">响应延迟</span>
+                <span className="text-slate-400">{t("overview.latency")}</span>
                 <span className="font-mono text-slate-200">{latencyMs} ms</span>
               </div>
 
               <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">服务版本</span>
+                <span className="text-slate-400">{t("overview.serverVersion")}</span>
                 <span className="font-mono text-brand-400 font-semibold">
                   v{versionInfo?.version || "dev"}
                 </span>
               </div>
 
               <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">构建 Commit</span>
+                <span className="text-slate-400">{t("overview.buildCommit")}</span>
                 <span className="font-mono text-slate-300">
                   {versionInfo?.commit ? versionInfo.commit.substring(0, 8) : "none"}
                 </span>
               </div>
 
               <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">构建时间</span>
+                <span className="text-slate-400">{t("overview.buildTime")}</span>
                 <span className="text-slate-400 font-mono text-[11px]">
                   {versionInfo?.buildDate || "unknown"}
                 </span>
               </div>
 
               <div className="flex justify-between py-2">
-                <span className="text-slate-400">插件系统 ABI</span>
+                <span className="text-slate-400">{t("overview.pluginAbi")}</span>
                 <span className="font-medium text-slate-300">
-                  {versionInfo?.supportPlugin ? "已启用 (Supported)" : "未激活"}
+                  {versionInfo?.supportPlugin ? t("overview.enabled") : t("overview.disabledLabel")}
                 </span>
               </div>
             </div>

@@ -30,6 +30,12 @@
 
 ## ✨ 核心特性
 
+- 🌐 **多语言国际化 (i18n)**：内置中英双语，一键点击顶部栏「中 / EN」按钮即时无缝切换语言。
+- 📈 **调用量与流量趋势可视化大盘**：
+  - 自动聚合账号池实时时间序列请求数据，绘制精美的 SVG 动态流量渐变走势图。
+  - 统计综合成功率、总请求量及各时间段峰值。
+  - 悬浮数据指示器：精确查看每个时段的调用频次、成功与失败次数及占比。
+  - 模型渠道占比分布条形图（Claude vs OpenAI vs Gemini vs Kimi）。
 - ⚡ **开箱即用 & 毫秒级探测**：自动检测 CLIProxyAPI 服务存活、Ping 延迟、Git 提交版本与最新 Release 更新。
 - 👥 **多账号与凭据池统一管理**：
   - 分类直观查看 **Claude Code**、**OpenAI Codex**、**Google Antigravity / Gemini**、**xAI Grok**、**Moonshot Kimi**、**Devin** 账号状态。
@@ -74,6 +80,21 @@ npm run dev
 ---
 
 ## 🐳 Docker 容器化部署
+
+### 方案 0：直接拉取 GitHub 官方预构建镜像 (最快捷)
+
+无需本地安装 Node 或克隆源码编译，GitHub Actions 已自动构建多架构镜像 (`linux/amd64`, `linux/arm64`)：
+
+```bash
+docker run -d \
+  --name cliproxy-dashboard \
+  -p 12345:80 \
+  -e BACKEND_HOST=host.docker.internal \
+  -e BACKEND_PORT=8317 \
+  --add-host=host.docker.internal:host-gateway \
+  --restart unless-stopped \
+  ghcr.io/yaanlaan/cliproxy-dashboard:latest
+```
 
 ### 方案 1：前后端一键全家桶部署 (推荐)
 
@@ -187,3 +208,4 @@ claude
 ## 📄 开源许可
 
 本项目遵循 [MIT License](LICENSE) 开源许可证。
+

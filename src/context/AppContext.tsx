@@ -15,6 +15,10 @@ interface AppContextType {
   setServerUrl: (url: string) => void;
   secretKey: string;
   setSecretKey: (key: string) => void;
+  isAuthenticated: boolean;
+  currentUser: string;
+  login: (username: string, password: string, customServerUrl?: string) => Promise<{ ok: boolean; error?: string }>;
+  logout: () => void;
   isConnected: boolean;
   latencyMs: number;
   versionInfo?: ServerVersionInfo;
@@ -29,6 +33,9 @@ interface AppContextType {
   removeToast: (id: string) => void;
   isConnectionModalOpen: boolean;
   setIsConnectionModalOpen: (open: boolean) => void;
+  isAccountModalOpen: boolean;
+  setIsAccountModalOpen: (open: boolean) => void;
+  updateAdminCredentials: (newUsername: string, newPassword?: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -36,6 +43,15 @@ const AppContext = createContext<AppContextType | null>(null);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [serverUrl, setServerUrlState] = useState<string>(() => api.getServerUrl());
   const [secretKey, setSecretKeyState] = useState<string>(() => api.getSecretKey() || "123456");
+  
+  // Login & Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem("cpa_is_authenticated") === "true";
+  });
+  const [currentUser, setCurrentUser] = useState<string>(() => {
+    return localStorage.getItem("cpa_auth_user") || "admin";
+  });
+
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [latencyMs, setLatencyMs] = useState<number>(0);
   const [versionInfo, setVersionInfo] = useState<ServerVersionInfo | undefined>();
@@ -44,7 +60,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoadingAuthFiles, setIsLoadingAuthFiles] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState<boolean>(false);
+    const [isConnectionModalOpen, setIsConnectionModalOpen] = useState<boolean>(false);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState<boolean>(false);
 
   const addToast = useCallback((type: "success" | "error" | "info", message: string) => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -84,7 +101,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const files = await api.listAuthFiles();
       setAuthFiles(files);
     } catch (err: any) {
-      // If management key isn't provided or invalid
       console.warn("Failed to load auth files:", err.message);
     } finally {
       setIsLoadingAuthFiles(false);
@@ -102,13 +118,102 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [checkConnection, loadAuthFiles]);
 
+  const login = async (
+    username: string,
+    password: string,
+    customUrl?: string
+  ): Promise<{ ok: boolean; error?: string }> => {
+    const prevKey = api.getSecretKey();
+    const prevUrl = api.getServerUrl();
+
+    try {
+      if (customUrl) {
+        api.setServerUrl(customUrl);
+      }
+      api.setSecretKey(password);
+
+      // Verify credentials with backend
+      const health = await api.checkHealth();
+      if (!health.ok) {
+        api.setSecretKey(prevKey);
+        api.setServerUrl(prevUrl);
+        return { ok: false, error: "服务不可达，请检查服务器地址是否正确" };
+      }
+
+      // Test management authentication
+      try {
+        await api.listAuthFiles();
+      } catch (authErr: any) {
+        api.setSecretKey(prevKey);
+        api.setServerUrl(prevUrl);
+        if (authErr.message?.includes("401") || authErr.message?.includes("invalid")) {
+          return { ok: false, error: "管理密码无效，请检查 config.yaml 中 secret-key 的配置" };
+        }
+        if (authErr.message?.includes("404")) {
+          return { ok: false, error: "后端管理功能未启用 (404)，请检查 config.yaml 中已设置 secret-key" };
+        }
+        return { ok: false, error: `鉴权未通过: ${authErr.message}` };
+      }
+
+      // Success
+      setSecretKey(password);
+      if (customUrl) setServerUrl(customUrl);
+      setCurrentUser(username);
+      setIsAuthenticated(true);
+      localStorage.setItem("cpa_is_authenticated", "true");
+      localStorage.setItem("cpa_auth_user", username);
+      addToast("success", `登录成功，欢迎管理员 ${username}！`);
+      await refreshAll();
+      return { ok: true };
+    } catch (e: any) {
+      api.setSecretKey(prevKey);
+      api.setServerUrl(prevUrl);
+      return { ok: false, error: e.message || "登录出现异常" };
+    }
+  };
+
+  const updateAdminCredentials = async (
+    newUsername: string,
+    newPassword?: string
+  ): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      if (newPassword) {
+        let currentYaml = await api.getConfigYAML();
+        if (currentYaml.includes("remote-management:")) {
+          currentYaml = currentYaml.replace(
+            /(remote-management:\s*[\s\S]*?secret-key:\s*)([^\r\n]*)/,
+            `$1"${newPassword.trim()}"`
+          );
+        } else {
+          currentYaml += `\nremote-management:\n  allow-remote: true\n  secret-key: "${newPassword.trim()}"\n`;
+        }
+        await api.updateConfigYAML(currentYaml);
+        setSecretKey(newPassword.trim());
+      }
+
+      setCurrentUser(newUsername.trim());
+      localStorage.setItem("cpa_auth_user", newUsername.trim());
+      return { ok: true };
+    } catch (e: any) {
+      return { ok: false, error: e.message || "更新配置失败" };
+    }
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("cpa_is_authenticated");
+    addToast("info", "已安全退出控制台");
+  };
+
   useEffect(() => {
-    refreshAll();
-    const interval = setInterval(() => {
-      checkConnection();
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [refreshAll, checkConnection]);
+    if (isAuthenticated) {
+      refreshAll();
+      const interval = setInterval(() => {
+        checkConnection();
+      }, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, refreshAll, checkConnection]);
 
   return (
     <AppContext.Provider
@@ -117,6 +222,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setServerUrl,
         secretKey,
         setSecretKey,
+        isAuthenticated,
+        currentUser,
+        login,
+        logout,
         isConnected,
         latencyMs,
         versionInfo,
@@ -131,6 +240,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeToast,
         isConnectionModalOpen,
         setIsConnectionModalOpen,
+        isAccountModalOpen,
+        setIsAccountModalOpen,
+        updateAdminCredentials,
       }}
     >
       {children}
