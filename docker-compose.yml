@@ -1,0 +1,15 @@
+services:
+  cliproxy-web:
+    build: .
+    image: cliproxy-web:latest
+    container_name: cliproxy-web
+    ports:
+      - "12345:80"
+    environment:
+      # If CLIProxyAPI is running on host machine, use host.docker.internal
+      # If running in same docker network as cli-proxy-api, use cli-proxy-api
+      - BACKEND_HOST=host.docker.internal
+      - BACKEND_PORT=8317
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

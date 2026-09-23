@@ -1,0 +1,10 @@
+node_modules
+dist
+dist.tar.gz
+*.tar.gz
+.env
+.env.*
+*.log
+.DS_Store
+.vscode
+.idea

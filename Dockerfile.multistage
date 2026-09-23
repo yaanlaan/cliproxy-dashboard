@@ -1,0 +1,29 @@
+# Stage 1: Build the frontend
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Cache package dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --prefer-offline --no-audit
+
+COPY . .
+
+RUN npm run build
+
+# Stage 2: Serve via Nginx
+FROM nginx:alpine
+
+# Copy nginx config template (nginx official image automatically replaces env vars into /etc/nginx/conf.d/)
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+
+# Copy built frontend assets
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Default backend host and port inside docker network
+ENV BACKEND_HOST=cli-proxy-api
+ENV BACKEND_PORT=8317
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
