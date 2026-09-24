@@ -4,6 +4,8 @@ import { useI18n } from "../i18n";
 import {
   Server,
   RefreshCw,
+  Rocket,
+  Sparkles,
   Settings,
   ExternalLink,
   Zap,
@@ -21,6 +23,8 @@ export const Header: React.FC = () => {
     refreshAll,
     setIsConnectionModalOpen,
     setIsAccountModalOpen,
+    isUpdateModalOpen,
+    setIsUpdateModalOpen,
     serverUrl,
     currentUser,
     logout,
@@ -92,17 +96,26 @@ export const Header: React.FC = () => {
           )}
         </div>
 
-        {/* Update notification */}
-        {hasNewVersion && (
-          <a
-            href={latestVersion?.html_url || "https://github.com/router-for-me/CLIProxyAPI/releases"}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium hover:bg-amber-500/20 transition"
+                {/* Version & Update notification button */}
+        {hasNewVersion ? (
+          <button
+            onClick={() => setIsUpdateModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/25 transition animate-pulse"
           >
-            {t("common.newVersion")} {latestVersion?.tag_name}
-            <ExternalLink className="w-3 h-3" />
-          </a>
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>
+              {t("common.newVersion")} {latestVersion?.["latest-version"] || latestVersion?.tag_name}
+            </span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsUpdateModalOpen(true)}
+            title={language === "zh" ? "核心版本与更新中心" : "Core Version & Updates"}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-800 bg-slate-950/60 text-slate-300 hover:text-white hover:bg-slate-800 transition text-xs font-mono font-medium"
+          >
+            <Rocket className="w-3.5 h-3.5 text-brand-400" />
+            <span>v{versionInfo?.version ? versionInfo.version.replace(/^v/, "") : "7.3.15"}</span>
+          </button>
         )}
 
         {/* Language Switcher */}
@@ -156,5 +169,6 @@ export const Header: React.FC = () => {
     </header>
   );
 };
+
 
 

@@ -35,6 +35,8 @@ interface AppContextType {
   setIsConnectionModalOpen: (open: boolean) => void;
   isAccountModalOpen: boolean;
   setIsAccountModalOpen: (open: boolean) => void;
+  isUpdateModalOpen: boolean;
+  setIsUpdateModalOpen: (open: boolean) => void;
   updateAdminCredentials: (newUsername: string, newPassword?: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
@@ -64,6 +66,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState<boolean>(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState<boolean>(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
 
   const addToast = useCallback((type: "success" | "error" | "info", message: string) => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -255,6 +258,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsConnectionModalOpen,
         isAccountModalOpen,
         setIsAccountModalOpen,
+        isUpdateModalOpen,
+        setIsUpdateModalOpen,
         updateAdminCredentials,
       }}
     >
@@ -268,3 +273,4 @@ export const useApp = () => {
   if (!context) throw new Error("useApp must be used within AppProvider");
   return context;
 };
+

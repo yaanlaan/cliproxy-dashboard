@@ -36,6 +36,7 @@ export interface ServerVersionInfo {
 
 export interface LatestVersionInfo {
   tag_name?: string;
+  "latest-version"?: string;
   name?: string;
   html_url?: string;
   published_at?: string;
@@ -92,5 +93,6 @@ export interface OAuthStatusResponse {
   message?: string;
   error?: string;
 }
+
 
 

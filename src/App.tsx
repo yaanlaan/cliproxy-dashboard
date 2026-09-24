@@ -1,3 +1,4 @@
+import { UpdateModal } from "./components/UpdateModal";
 import { AccountModal } from "./components/AccountModal";
 import React, { useState } from "react";
 import { I18nProvider } from "./i18n";
@@ -16,7 +17,7 @@ import { PlaygroundTab } from "./components/tabs/PlaygroundTab";
 import { ConfigTab } from "./components/tabs/ConfigTab";
 
 const MainLayout: React.FC = () => {
-  const { activeTab } = useApp();
+  const { activeTab, isUpdateModalOpen, setIsUpdateModalOpen } = useApp();
   const [isOAuthModalOpen, setIsOAuthModalOpen] = useState(false);
 
   return (
@@ -58,6 +59,7 @@ const MainLayout: React.FC = () => {
 
       <ConnectionModal />
       <AccountModal />
+      <UpdateModal isOpen={isUpdateModalOpen} onClose={() => setIsUpdateModalOpen(false)} />
       <OAuthModal
         isOpen={isOAuthModalOpen}
         onClose={() => setIsOAuthModalOpen(false)}
@@ -93,4 +95,5 @@ export const App: React.FC = () => {
 };
 
 export default App;
+
 
