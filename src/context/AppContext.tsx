@@ -42,7 +42,9 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [serverUrl, setServerUrlState] = useState<string>(() => api.getServerUrl());
-  const [secretKey, setSecretKeyState] = useState<string>(() => api.getSecretKey() || "123456");
+  const [secretKey, setSecretKeyState] = useState<string>(() => {
+    return localStorage.getItem("cpa_secret_key") || "";
+  });
   
   // Login & Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -60,7 +62,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoadingAuthFiles, setIsLoadingAuthFiles] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [toasts, setToasts] = useState<Toast[]>([]);
-    const [isConnectionModalOpen, setIsConnectionModalOpen] = useState<boolean>(false);
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState<boolean>(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState<boolean>(false);
 
   const addToast = useCallback((type: "success" | "error" | "info", message: string) => {
@@ -109,14 +111,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const refreshAll = useCallback(async () => {
     const connected = await checkConnection();
-    if (connected) {
+    // CRITICAL SECURITY FIX: Only fetch management endpoints if user is authenticated!
+    if (connected && isAuthenticated) {
       await loadAuthFiles();
       try {
         const latest = await api.getLatestVersion();
         setLatestVersion(latest);
       } catch {}
     }
-  }, [checkConnection, loadAuthFiles]);
+  }, [checkConnection, loadAuthFiles, isAuthenticated]);
 
   const login = async (
     username: string,
@@ -132,7 +135,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       api.setSecretKey(password);
 
-      // Verify credentials with backend
+      // 1. Check healthz first (no auth needed, tests basic network connectivity)
       const health = await api.checkHealth();
       if (!health.ok) {
         api.setSecretKey(prevKey);
@@ -140,30 +143,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { ok: false, error: "服务不可达，请检查服务器地址是否正确" };
       }
 
-      // Test management authentication
+      // 2. Test management key authentication once
       try {
         await api.listAuthFiles();
       } catch (authErr: any) {
         api.setSecretKey(prevKey);
         api.setServerUrl(prevUrl);
+        if (authErr.message?.includes("IP banned")) {
+          return { ok: false, error: authErr.message };
+        }
         if (authErr.message?.includes("401") || authErr.message?.includes("invalid")) {
-          return { ok: false, error: "管理密码无效，请检查 config.yaml 中 secret-key 的配置" };
+          return { ok: false, error: "管理密码错误，请检查输入的密码是否与后端配置一致" };
         }
         if (authErr.message?.includes("404")) {
-          return { ok: false, error: "后端管理功能未启用 (404)，请检查 config.yaml 中已设置 secret-key" };
+          return { ok: false, error: "后端管理功能未启用 (404)，请检查 config.yaml 中已配置 secret-key" };
         }
         return { ok: false, error: `鉴权未通过: ${authErr.message}` };
       }
 
-      // Success
+      // 3. Login Successful!
       setSecretKey(password);
       if (customUrl) setServerUrl(customUrl);
       setCurrentUser(username);
       setIsAuthenticated(true);
       localStorage.setItem("cpa_is_authenticated", "true");
       localStorage.setItem("cpa_auth_user", username);
+      localStorage.setItem("cpa_secret_key", password);
       addToast("success", `登录成功，欢迎管理员 ${username}！`);
-      await refreshAll();
       return { ok: true };
     } catch (e: any) {
       api.setSecretKey(prevKey);
@@ -189,6 +195,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
         await api.updateConfigYAML(currentYaml);
         setSecretKey(newPassword.trim());
+        localStorage.setItem("cpa_secret_key", newPassword.trim());
       }
 
       setCurrentUser(newUsername.trim());
@@ -202,6 +209,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem("cpa_is_authenticated");
+    localStorage.removeItem("cpa_secret_key");
+    api.setSecretKey("");
+    setSecretKey("");
     addToast("info", "已安全退出控制台");
   };
 
@@ -212,6 +222,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         checkConnection();
       }, 15000);
       return () => clearInterval(interval);
+    } else {
+      // Unauthenticated: only check /healthz for basic server status
+      checkConnection();
     }
   }, [isAuthenticated, refreshAll, checkConnection]);
 
@@ -255,4 +268,3 @@ export const useApp = () => {
   if (!context) throw new Error("useApp must be used within AppProvider");
   return context;
 };
-
