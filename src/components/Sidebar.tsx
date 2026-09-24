@@ -120,12 +120,12 @@ export const Sidebar: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-slate-400 text-xs">{t("nav.repoWeb")}</span>
             <a
-              href="https://github.com/yaanlaan/cliproxy-dashboard"
+              href="https://github.com/yaanlaan/panel4cliproxyapi"
               target="_blank"
               rel="noreferrer"
               className="text-brand-400 hover:underline font-mono text-[11px] flex items-center gap-1"
             >
-              cliproxy-dashboard
+              panel4cliproxyapi
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
@@ -146,3 +146,4 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
+

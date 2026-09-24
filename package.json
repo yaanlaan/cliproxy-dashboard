@@ -1,5 +1,5 @@
 {
-  "name": "cliproxy-dashboard",
+  "name": "panel4cliproxyapi",
   "private": false,
   "version": "1.0.0",
   "description": "A modern, beautiful web dashboard and management console for CLIProxyAPI",
@@ -24,7 +24,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yaanlaan/cliproxy-dashboard.git"
+    "url": "https://github.com/yaanlaan/panel4cliproxyapi.git"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -45,3 +45,4 @@
     "vite-plugin-singlefile": "^2.1.0"
   }
 }
+

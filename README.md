@@ -1,4 +1,4 @@
-# CLIProxy Dashboard
+# panel4cliproxyapi
 
 <div align="center">
 
@@ -22,7 +22,7 @@
 
 ## 📖 项目简介
 
-**CLIProxy Dashboard** 是专为开源反向代理服务 [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) 量身打造的现代化 Web 控制台。
+**panel4cliproxyapi** 是专为开源反向代理服务 [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) 量身打造的现代化 Web 控制台。
 
 它通过直观的可视化界面，彻底摆脱繁琐的手动编辑配置文件，支持**多账号池监控、全平台 OAuth 网页授权、局域网/跨设备登录辅助、多调度策略切换、客户端 API Key 管理、在线 YAML 热更新以及原生 SSE 流式 API 连通性测试**。
 
@@ -65,8 +65,8 @@
 
 ```bash
 # 1. 克隆本仓库
-git clone https://github.com/yaanlaan/cliproxy-dashboard.git
-cd cliproxy-dashboard
+git clone https://github.com/yaanlaan/panel4cliproxyapi.git
+cd panel4cliproxyapi
 
 # 2. 安装依赖
 npm install
@@ -87,18 +87,18 @@ npm run dev
 
 ```bash
 docker run -d \
-  --name cliproxy-dashboard \
+  --name panel4cliproxyapi \
   -p 12345:80 \
   -e BACKEND_HOST=host.docker.internal \
   -e BACKEND_PORT=8317 \
   --add-host=host.docker.internal:host-gateway \
   --restart unless-stopped \
-  ghcr.io/yaanlaan/cliproxy-dashboard:latest
+  ghcr.io/yaanlaan/panel4cliproxyapi:latest
 ```
 
 ### 方案 1：前后端一键全家桶部署 (推荐)
 
-在项目根目录下使用 `docker-compose.yml`，一键同时拉取运行后端 `cli-proxy-api` 与前端 `cliproxy-dashboard`：
+在项目根目录下使用 `docker-compose.yml`，一键同时拉取运行后端 `cli-proxy-api` 与前端 `panel4cliproxyapi`：
 
 ```yaml
 services:
@@ -120,10 +120,10 @@ services:
     networks:
       - cpa-network
 
-  cliproxy-dashboard:
+  panel4cliproxyapi:
     build: .
-    image: cliproxy-dashboard:latest
-    container_name: cliproxy-dashboard
+    image: panel4cliproxyapi:latest
+    container_name: panel4cliproxyapi
     ports:
       - "12345:80"
     environment:
@@ -154,16 +154,16 @@ docker compose up -d
 若后端已在宿主机或其他服务器上运行：
 
 ```bash
-docker build -t cliproxy-dashboard .
+docker build -t panel4cliproxyapi .
 
 docker run -d \
-  --name cliproxy-dashboard \
+  --name panel4cliproxyapi \
   -p 12345:80 \
   -e BACKEND_HOST=host.docker.internal \
   -e BACKEND_PORT=8317 \
   --add-host=host.docker.internal:host-gateway \
   --restart unless-stopped \
-  cliproxy-dashboard
+  panel4cliproxyapi
 ```
 
 ---
@@ -208,4 +208,5 @@ claude
 ## 📄 开源许可
 
 本项目遵循 [MIT License](LICENSE) 开源许可证。
+
 

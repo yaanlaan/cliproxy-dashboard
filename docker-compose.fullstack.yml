@@ -18,11 +18,11 @@ services:
     networks:
       - cpa-network
 
-  # 2. Frontend: CLIProxy Dashboard Web Console
-  cliproxy-dashboard:
+  # 2. Frontend: panel4cliproxyapi Web Console
+  panel4cliproxyapi:
     build: .
-    image: cliproxy-dashboard:latest
-    container_name: cliproxy-dashboard
+    image: panel4cliproxyapi:latest
+    container_name: panel4cliproxyapi
     ports:
       - "12345:80"
     environment:
@@ -37,3 +37,4 @@ services:
 networks:
   cpa-network:
     driver: bridge
+

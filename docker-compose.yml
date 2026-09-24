@@ -1,8 +1,8 @@
 services:
-  cliproxy-web:
+  panel4cliproxyapi:
     build: .
-    image: cliproxy-web:latest
-    container_name: cliproxy-web
+    image: panel4cliproxyapi:latest
+    container_name: panel4cliproxyapi
     ports:
       - "12345:80"
     environment:
@@ -13,3 +13,4 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+

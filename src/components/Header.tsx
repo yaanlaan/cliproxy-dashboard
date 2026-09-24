@@ -57,10 +57,7 @@ export const Header: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-bold text-white text-base tracking-tight">CLIProxy</h1>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">
-                Dashboard
-              </span>
+              <h1 className="font-bold text-white text-base tracking-tight font-mono">panel4cliproxyapi</h1>
             </div>
             <p className="text-[11px] text-slate-400 font-mono">
               {serverUrl || window.location.origin}
@@ -159,4 +156,5 @@ export const Header: React.FC = () => {
     </header>
   );
 };
+
 

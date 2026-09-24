@@ -5,7 +5,7 @@ port: 8317
 # IP addresses or CIDRs of proxies allowed to supply forwarded client IP headers.
 trusted-proxies: []
 
-# Management API settings (required for cliproxy-dashboard)
+# Management API settings (required for panel4cliproxyapi)
 remote-management:
   allow-remote: true
   secret-key: "123456"
@@ -28,4 +28,5 @@ routing:
 
 # Auth directory
 auth-dir: "~/.cli-proxy-api"
+
 

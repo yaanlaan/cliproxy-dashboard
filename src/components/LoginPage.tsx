@@ -79,9 +79,7 @@ export const LoginPage: React.FC = () => {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 text-white shadow-xl shadow-brand-500/25 mb-4">
             <Zap className="w-7 h-7 fill-white text-transparent" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white mb-1.5">
-            CLIProxy Dashboard
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white mb-1.5 font-mono">panel4cliproxyapi</h1>
           <p className="text-xs text-slate-400">
             {language === "zh" ? "请输入管理员凭据登录管理控制台" : "Sign in with admin credentials"}
           </p>
@@ -207,4 +205,5 @@ export const LoginPage: React.FC = () => {
     </div>
   );
 };
+
 
