@@ -167,18 +167,26 @@ class ApiService {
     return res.data;
   }
 
-    async submitOAuthCallback(provider: string, redirectUrl: string): Promise<void> {
+    async submitOAuthCallback(
+    provider: string,
+    redirectUrl: string,
+    state?: string,
+    code?: string
+  ): Promise<void> {
     await this.request("/v0/management/oauth-callback", {
       method: "POST",
       body: JSON.stringify({
         provider,
         redirect_url: redirectUrl.trim(),
+        state: state || undefined,
+        code: code || undefined,
       }),
     });
   }
 
-  async getAuthStatus(): Promise<OAuthStatusResponse> {
-    const res = await this.request<OAuthStatusResponse>("/v0/management/get-auth-status");
+  async getAuthStatus(state?: string): Promise<OAuthStatusResponse> {
+    const query = state ? `?state=${encodeURIComponent(state)}` : "";
+    const res = await this.request<OAuthStatusResponse>(`/v0/management/get-auth-status${query}`);
     return res.data;
   }
 
@@ -355,6 +363,7 @@ class ApiService {
 }
 
 export const api = new ApiService();
+
 
 
 

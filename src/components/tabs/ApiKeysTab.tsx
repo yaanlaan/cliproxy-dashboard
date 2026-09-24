@@ -1,3 +1,4 @@
+import { copyToClipboard } from "../../utils/clipboard";
 import React, { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import { useApp } from "../../context/AppContext";
@@ -38,11 +39,15 @@ export const ApiKeysTab: React.FC = () => {
     }
   };
 
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedText(label);
-    addToast("success", `已复制 ${label}`);
-    setTimeout(() => setCopiedText(null), 2000);
+  const handleCopy = async (text: string, label: string) => {
+    const success = await copyToClipboard(text);
+    if (success) {
+      setCopiedText(label);
+      addToast("success", `已复制 ${label}`);
+      setTimeout(() => setCopiedText(null), 2000);
+    } else {
+      addToast("error", "复制失败，请手动选中文本复制");
+    }
   };
 
   const handleGenerateKey = () => {
@@ -282,3 +287,4 @@ print(response.choices[0].message.content)`,
     </div>
   );
 };
+

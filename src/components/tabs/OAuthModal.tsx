@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { api } from "../../services/api";
 import { useApp } from "../../context/AppContext";
+import { useI18n } from "../../i18n";
+import { copyToClipboard } from "../../utils/clipboard";
 import {
   X,
   ExternalLink,
@@ -9,7 +11,6 @@ import {
   AlertCircle,
   Zap,
   Globe,
-  HelpCircle,
   Copy,
   Check,
 } from "lucide-react";
@@ -60,9 +61,12 @@ const PROVIDERS = [
 
 export const OAuthModal: React.FC<OAuthModalProps> = ({ isOpen, onClose }) => {
   const { addToast, refreshAll } = useApp();
+  const { language } = useI18n();
+
   const [selectedProvider, setSelectedProvider] = useState<string>("claude");
   const [step, setStep] = useState<"select" | "authenticating" | "success" | "error">("select");
   const [authUrl, setAuthUrl] = useState<string>("");
+  const [oauthState, setOAuthState] = useState<string>("");
   const [userCode, setUserCode] = useState<string>("");
   const [pastedCallbackUrl, setPastedCallbackUrl] = useState<string>("");
   const [submittingCallback, setSubmittingCallback] = useState<boolean>(false);
@@ -76,6 +80,7 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({ isOpen, onClose }) => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
       setStep("select");
       setAuthUrl("");
+      setOAuthState("");
       setUserCode("");
       setPastedCallbackUrl("");
       setSubmittingCallback(false);
@@ -87,9 +92,37 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  const startPolling = (stateToCheck: string) => {
+    if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+
+    pollTimerRef.current = window.setInterval(async () => {
+      try {
+        const statusRes = await api.getAuthStatus(stateToCheck);
+        // Backend returns {"status":"ok"} when completed!
+        if (statusRes.status === "ok") {
+          if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+          setStep("success");
+          setStatusMessage(language === "zh" ? "授权成功！凭据已自动写入账号池。" : "Authorization successful! Credentials saved.");
+          addToast("success", `【${selectedProvider}】账号授权成功！`);
+          await refreshAll();
+          setTimeout(() => {
+            onClose();
+          }, 1800);
+        } else if (statusRes.status === "error") {
+          if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+          setStep("error");
+          setStatusMessage(statusRes.message || statusRes.error || "授权失败，请重试");
+        }
+        // If status is "wait", keep polling
+      } catch {
+        // ignore transient network errors
+      }
+    }, 1500);
+  };
+
   const handleStartAuth = async () => {
     setLoading(true);
-    setStatusMessage("正在获取授权链接...");
+    setStatusMessage(language === "zh" ? "正在获取授权链接..." : "Getting authorization link...");
     try {
       const res = await api.getOAuthUrl(selectedProvider);
       const url = res.url || res.auth_url || "";
@@ -98,38 +131,23 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({ isOpen, onClose }) => {
       }
 
       setAuthUrl(url);
+      const state = res.state || "";
+      setOAuthState(state);
+
       if (res.user_code) {
         setUserCode(res.user_code);
       }
 
       setStep("authenticating");
-      setStatusMessage("正在等待授权完成...");
+      setStatusMessage(language === "zh" ? "正在等待授权完成..." : "Waiting for authorization to complete...");
 
       // Automatically open browser window
       window.open(url, "_blank");
 
-      // Start polling status
-      pollTimerRef.current = window.setInterval(async () => {
-        try {
-          const statusRes = await api.getAuthStatus();
-          if (statusRes.status === "success" || statusRes.status === "completed") {
-            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-            setStep("success");
-            setStatusMessage("授权成功！凭据已自动写入账号池。");
-            addToast("success", `【${selectedProvider}】账号授权成功！`);
-            await refreshAll();
-            setTimeout(() => {
-              onClose();
-            }, 1800);
-          } else if (statusRes.status === "failed" || statusRes.status === "error") {
-            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-            setStep("error");
-            setStatusMessage(statusRes.message || statusRes.error || "授权失败，请重试");
-          }
-        } catch {
-          // ignore transient polling errors
-        }
-      }, 1500);
+      // Start polling status with state
+      if (state) {
+        startPolling(state);
+      }
     } catch (e: any) {
       setStep("error");
       if (e.message?.includes("404")) {
@@ -143,11 +161,55 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleSubmitManualCallback = async () => {
-    if (!pastedCallbackUrl.trim()) return;
+    const rawText = pastedCallbackUrl.trim();
+    if (!rawText) return;
+
     setSubmittingCallback(true);
+
     try {
-      await api.submitOAuthCallback(selectedProvider, pastedCallbackUrl.trim());
-      addToast("success", "已成功提交回调地址，正在完成换码...");
+      // Robust client-side URL & query string parsing
+      let parsedCode = "";
+      let parsedState = "";
+      let parsedError = "";
+
+      const normalized = rawText.startsWith("http://") || rawText.startsWith("https://")
+        ? rawText
+        : "http://" + rawText;
+
+      try {
+        const u = new URL(normalized);
+        parsedCode = u.searchParams.get("code") || "";
+        parsedState = u.searchParams.get("state") || "";
+        parsedError = u.searchParams.get("error") || u.searchParams.get("error_description") || "";
+      } catch {
+        // Regex fallback
+        const codeMatch = rawText.match(/[?&]code=([^&]+)/);
+        const stateMatch = rawText.match(/[?&]state=([^&]+)/);
+        const errorMatch = rawText.match(/[?&](?:error|error_description)=([^&]+)/);
+        if (codeMatch) parsedCode = decodeURIComponent(codeMatch[1]);
+        if (stateMatch) parsedState = decodeURIComponent(stateMatch[1]);
+        if (errorMatch) parsedError = decodeURIComponent(errorMatch[1]);
+      }
+
+      if (parsedError) {
+        throw new Error(`官方返回错误: ${parsedError}`);
+      }
+
+      const stateToUse = parsedState || oauthState;
+      if (!stateToUse && !parsedCode) {
+        throw new Error("未能从粘贴的内容中解析出 code 或 state，请确认完整复制了浏览器地址栏");
+      }
+
+      // Submit to backend
+      await api.submitOAuthCallback(selectedProvider, rawText, stateToUse, parsedCode);
+      addToast("success", "已成功提交回调信息，正在与官方换取 Token...");
+      setStatusMessage(language === "zh" ? "正在与官方服务器换取 Token 并写入凭据库..." : "Exchanging token with provider...");
+
+      // Update state and restart fast polling
+      if (stateToUse) {
+        setOAuthState(stateToUse);
+        startPolling(stateToUse);
+      }
       setPastedCallbackUrl("");
     } catch (e: any) {
       addToast("error", `提交回调失败: ${e.message}`);
@@ -156,12 +218,16 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleCopyCode = () => {
+  const handleCopyCode = async () => {
     if (userCode) {
-      navigator.clipboard.writeText(userCode);
-      setCopiedCode(true);
-      addToast("success", "已复制设备验证码");
-      setTimeout(() => setCopiedCode(false), 2000);
+      const success = await copyToClipboard(userCode);
+      if (success) {
+        setCopiedCode(true);
+        addToast("success", "已复制设备验证码");
+        setTimeout(() => setCopiedCode(false), 2000);
+      } else {
+        addToast("error", "复制失败，请手动选中文本复制");
+      }
     }
   };
 
@@ -179,7 +245,9 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({ isOpen, onClose }) => {
         <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-brand-400" />
-            <h3 className="text-base font-semibold text-white">添加账号 (OAuth 授权)</h3>
+            <h3 className="text-base font-semibold text-white">
+              {language === "zh" ? "添加账号 (OAuth 授权)" : "Add Account (OAuth)"}
+            </h3>
           </div>
           <button
             onClick={handleCancel}
@@ -284,23 +352,23 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({ isOpen, onClose }) => {
                     <Globe className="w-3.5 h-3.5 text-brand-400" />
                     <span>局域网 / 远程设备授权辅助</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    若你在其他电脑上访问本面板，授权后浏览器跳转至 <code className="text-slate-300">localhost:...</code> 可能提示“无法访问此网站”。<strong>此时请直接复制浏览器地址栏中的完整网址并粘贴到下方</strong>：
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    在其他电脑上访问本面板时，授权完成浏览器跳转至 <code className="text-brand-300 font-mono">localhost:...</code> 会提示“无法连接”。<strong>请直接全选复制该报错页面的浏览器地址栏完整网址，粘贴到下方即可：</strong>
                   </p>
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
                       value={pastedCallbackUrl}
                       onChange={(e) => setPastedCallbackUrl(e.target.value)}
-                      placeholder="粘贴地址栏链接 (例如: http://localhost:54545/callback?code=...)"
+                      placeholder="例如: http://localhost:51121/oauth-callback?state=...&code=..."
                       className="flex-1 rounded-lg bg-slate-900 border border-slate-700/80 px-3 py-1.5 text-[11px] text-slate-200 placeholder-slate-600 font-mono focus:outline-none focus:border-brand-500"
                     />
                     <button
                       onClick={handleSubmitManualCallback}
                       disabled={!pastedCallbackUrl.trim() || submittingCallback}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-slate-200 transition disabled:opacity-50 shrink-0"
+                      className="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-[11px] font-semibold text-white transition disabled:opacity-50 shrink-0 shadow-sm"
                     >
-                      {submittingCallback ? "提交中..." : "提交完成"}
+                      {submittingCallback ? "提交中..." : "确认提交换码"}
                     </button>
                   </div>
                 </div>

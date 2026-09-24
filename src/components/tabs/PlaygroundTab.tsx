@@ -1,3 +1,4 @@
+import { copyToClipboard } from "../../utils/clipboard";
 import React, { useEffect, useState, useRef } from "react";
 import { api } from "../../services/api";
 import { useApp } from "../../context/AppContext";
@@ -193,12 +194,16 @@ export const PlaygroundTab: React.FC = () => {
     setElapsedMs(0);
   };
 
-  const handleCopyOutput = () => {
+  const handleCopyOutput = async () => {
     if (output) {
-      navigator.clipboard.writeText(output);
-      setCopiedOutput(true);
-      addToast("success", "输出已复制到剪贴板");
-      setTimeout(() => setCopiedOutput(false), 2000);
+      const success = await copyToClipboard(output);
+      if (success) {
+        setCopiedOutput(true);
+        addToast("success", "输出已复制到剪贴板");
+        setTimeout(() => setCopiedOutput(false), 2000);
+      } else {
+        addToast("error", "复制失败，请手动选中文本复制");
+      }
     }
   };
 
@@ -412,5 +417,6 @@ export const PlaygroundTab: React.FC = () => {
     </div>
   );
 };
+
 
 

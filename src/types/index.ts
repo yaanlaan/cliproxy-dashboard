@@ -83,6 +83,7 @@ export interface OAuthAuthUrlResponse {
   session_id?: string;
   user_code?: string;
   flow?: string;
+  state?: string;
   error?: string;
 }
 
@@ -91,4 +92,5 @@ export interface OAuthStatusResponse {
   message?: string;
   error?: string;
 }
+
 
