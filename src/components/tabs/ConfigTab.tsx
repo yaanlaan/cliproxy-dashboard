@@ -70,9 +70,7 @@ export const ConfigTab: React.FC = () => {
           if (cfg["remote-management"]["allow-remote"] !== undefined) {
             setAllowRemote(!!cfg["remote-management"]["allow-remote"]);
           }
-          if (cfg["remote-management"]["secret-key"]) {
-            setSecretKey(cfg["remote-management"]["secret-key"]);
-          }
+          // Do not load backend bcrypt hash into secretKey form state
         }
       }
     } catch {}
@@ -287,7 +285,7 @@ export const ConfigTab: React.FC = () => {
                     type={showSecretKey ? "text" : "password"}
                     value={secretKey}
                     onChange={(e) => setSecretKey(e.target.value)}
-                    placeholder="管理端密钥"
+                    placeholder="留空保持原密码不变，输入则修改为新密码"
                     className="w-full rounded-xl bg-slate-950 border border-slate-800 pl-3.5 pr-10 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"
                   />
                   <button
@@ -463,6 +461,7 @@ export const ConfigTab: React.FC = () => {
     </div>
   );
 };
+
 
 
 
