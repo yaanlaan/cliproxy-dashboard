@@ -19,8 +19,8 @@ export const LoginPage: React.FC = () => {
   const { login, serverUrl, setServerUrl } = useApp();
   const { language, setLanguage, t } = useI18n();
 
-  const [username, setUsername] = useState<string>("admin");
-  const [password, setPassword] = useState<string>("123456");
+  const [username, setUsername] = useState<string>(() => localStorage.getItem("cpa_auth_user") || "admin");
+  const [password, setPassword] = useState<string>(() => localStorage.getItem("cpa_secret_key") || "123456");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [customServerUrl, setCustomServerUrl] = useState<string>(serverUrl);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
@@ -205,5 +205,6 @@ export const LoginPage: React.FC = () => {
     </div>
   );
 };
+
 
 

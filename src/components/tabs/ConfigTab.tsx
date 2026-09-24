@@ -15,9 +15,6 @@ import {
   FormInput,
   Eye,
   EyeOff,
-  Sparkles,
-  Server,
-  Zap,
 } from "lucide-react";
 
 export const ConfigTab: React.FC = () => {
@@ -101,11 +98,12 @@ export const ConfigTab: React.FC = () => {
           /(remote-management:\s*[\s\S]*?allow-remote:\s*)(true|false)/,
           `$1${allowRemote}`
         );
-        if (secretKey.trim()) {
+        if (secretKey.trim() && !secretKey.trim().startsWith("$2")) {
           currentYaml = currentYaml.replace(
             /(remote-management:\s*[\s\S]*?secret-key:\s*)([^\r\n]*)/,
             `$1"${secretKey.trim()}"`
           );
+          api.setSecretKey(secretKey.trim());
         }
       }
 
@@ -119,7 +117,7 @@ export const ConfigTab: React.FC = () => {
 
       await api.updateConfigYAML(currentYaml);
       setYamlContent(currentYaml);
-      addToast("success", "配置已成功热更新至服务器");
+      addToast("success", t("common.saveSuccess"));
     } catch (e: any) {
       addToast("error", `保存配置失败: ${e.message}`);
     } finally {
@@ -131,8 +129,7 @@ export const ConfigTab: React.FC = () => {
     setSaving(true);
     try {
       await api.updateConfigYAML(yamlContent);
-      addToast("success", "YAML 配置已保存并热生效");
-      // Reload form values
+      addToast("success", t("common.saveSuccess"));
       await loadAllConfigs();
     } catch (e: any) {
       addToast("error", `更新失败: ${e.message}`);
@@ -156,10 +153,10 @@ export const ConfigTab: React.FC = () => {
         <div>
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
             <Sliders className="w-4 h-4 text-brand-400" />
-            系统配置与参数设置
+            {t("config.title")}
           </h2>
           <p className="text-[11px] text-slate-400">
-            支持图形化表单快速修改或高级 YAML 源码模式，保存后后台自动热生效（Hot-Reload）。
+            {t("config.desc")}
           </p>
         </div>
 
@@ -173,7 +170,7 @@ export const ConfigTab: React.FC = () => {
             }`}
           >
             <FormInput className="w-3.5 h-3.5" />
-            <span>可视化表单 (推荐)</span>
+            <span>{t("config.formModeBtn")}</span>
           </button>
           <button
             onClick={() => setMode("yaml")}
@@ -184,7 +181,7 @@ export const ConfigTab: React.FC = () => {
             }`}
           >
             <FileCode className="w-3.5 h-3.5" />
-            <span>原始 YAML 编辑</span>
+            <span>{t("config.yamlModeBtn")}</span>
           </button>
         </div>
       </div>
@@ -192,7 +189,7 @@ export const ConfigTab: React.FC = () => {
       {loading ? (
         <div className="py-20 text-center text-slate-500 text-xs">
           <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-500" />
-          正在读取系统配置...
+          {t("common.loading")}
         </div>
       ) : mode === "form" ? (
         /* Visual Form Mode */
@@ -202,23 +199,23 @@ export const ConfigTab: React.FC = () => {
             <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
               <Globe className="w-4 h-4 text-brand-400" />
               <div>
-                <h3 className="text-sm font-semibold text-white">出站网络代理 (Proxy Settings)</h3>
+                <h3 className="text-sm font-semibold text-white">{t("config.proxyTitle")}</h3>
                 <p className="text-[11px] text-slate-400">
-                  用于解决服务器直连海外大模型（Google / OpenAI / Anthropic）受限的问题。
+                  {t("config.proxyDesc")}
                 </p>
               </div>
             </div>
 
-                        <div className="space-y-2">
+            <div className="space-y-2">
               <label className="block text-xs font-medium text-slate-300">
-                出站代理地址 (Proxy URL)
+                {t("config.proxyUrlLabel")}
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   value={proxyUrl}
                   onChange={(e) => setProxyUrl(e.target.value)}
-                  placeholder="例如: http://127.0.0.1:7890 或 socks5://127.0.0.1:10808 (默认留空为直连)"
+                  placeholder={t("config.proxyPlaceholder")}
                   className="flex-1 rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500 transition"
                 />
                 {proxyUrl && (
@@ -227,12 +224,12 @@ export const ConfigTab: React.FC = () => {
                     onClick={() => setProxyUrl("")}
                     className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition shrink-0"
                   >
-                    设为直连
+                    {t("common.directConnection")}
                   </button>
                 )}
               </div>
               <p className="text-[11px] text-slate-500">
-                默认留空表示直连。若服务器处于受限网络环境且需访问海外大模型，可在此填入 HTTP 或 SOCKS5 出站代理。
+                {t("config.proxyHelp")}
               </p>
             </div>
           </div>
@@ -243,9 +240,9 @@ export const ConfigTab: React.FC = () => {
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <div>
-                  <h3 className="text-sm font-semibold text-white">安全与管理访问 (Remote Management)</h3>
+                  <h3 className="text-sm font-semibold text-white">{t("config.secTitle")}</h3>
                   <p className="text-[11px] text-slate-400">
-                    控制管理员身份凭据与外部网络访问权限。
+                    {t("config.secDesc")}
                   </p>
                 </div>
               </div>
@@ -256,14 +253,15 @@ export const ConfigTab: React.FC = () => {
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-brand-600/20 hover:bg-brand-600/30 border border-brand-500/30 text-xs font-semibold text-brand-300 transition"
               >
                 <KeyRound className="w-3.5 h-3.5 text-brand-400" />
-                <span>修改用户名 / 密码</span>
+                <span>{t("config.changeCredsBtn")}</span>
               </button>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950 border border-slate-800">
                 <div>
-                  <span className="text-xs font-semibold text-slate-200 block">允许远程管理 (Allow Remote)</span>
-                  <span className="text-[11px] text-slate-500">开启后局域网其他电脑可访问管理面板</span>
+                  <span className="text-xs font-semibold text-slate-200 block">{t("config.allowRemoteLabel")}</span>
+                  <span className="text-[11px] text-slate-500">{t("config.allowRemoteDesc")}</span>
                 </div>
                 <button
                   type="button"
@@ -272,20 +270,20 @@ export const ConfigTab: React.FC = () => {
                     allowRemote ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"
                   }`}
                 >
-                  {allowRemote ? "已允许" : "仅限本机"}
+                  {allowRemote ? t("config.allowRemoteYes") : t("config.allowRemoteNo")}
                 </button>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  管理面板密钥 (Secret Key)
+                  {t("config.secretKeyLabel")}
                 </label>
                 <div className="relative">
                   <input
                     type={showSecretKey ? "text" : "password"}
                     value={secretKey}
                     onChange={(e) => setSecretKey(e.target.value)}
-                    placeholder="留空保持原密码不变，输入则修改为新密码"
+                    placeholder={t("config.secretKeyPlaceholder")}
                     className="w-full rounded-xl bg-slate-950 border border-slate-800 pl-3.5 pr-10 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"
                   />
                   <button
@@ -305,9 +303,9 @@ export const ConfigTab: React.FC = () => {
             <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
               <RotateCw className="w-4 h-4 text-purple-400" />
               <div>
-                <h3 className="text-sm font-semibold text-white">调度与容错机制 (Routing & Retry)</h3>
+                <h3 className="text-sm font-semibold text-white">{t("config.routeTitle")}</h3>
                 <p className="text-[11px] text-slate-400">
-                  多账号轮询策略与限流避让参数。
+                  {t("config.routeDesc")}
                 </p>
               </div>
             </div>
@@ -315,22 +313,22 @@ export const ConfigTab: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  多账号轮询算法 (Strategy)
+                  {t("config.strategyLabel")}
                 </label>
                 <select
                   value={routingStrategy}
                   onChange={(e) => setRoutingStrategy(e.target.value)}
                   className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500 cursor-pointer"
                 >
-                  <option value="round-robin">轮询 (Round-Robin)</option>
-                  <option value="weighted-round-robin">加权轮询 (Weighted)</option>
-                  <option value="fill-first">顺序占满 (Fill-First)</option>
+                  <option value="round-robin">{t("routing.strategyRR")}</option>
+                  <option value="weighted-round-robin">{t("routing.strategyWRR")}</option>
+                  <option value="fill-first">{t("routing.strategyFF")}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  失败自动重试次数 (Request Retry)
+                  {t("config.retryLabel")}
                 </label>
                 <input
                   type="number"
@@ -344,8 +342,8 @@ export const ConfigTab: React.FC = () => {
 
               <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800">
                 <div>
-                  <span className="text-xs font-semibold text-slate-200 block">限流冷却机制 (Cooling)</span>
-                  <span className="text-[10px] text-slate-500">429 限流时自动避让</span>
+                  <span className="text-xs font-semibold text-slate-200 block">{t("config.coolingLabel")}</span>
+                  <span className="text-[10px] text-slate-500">{t("config.coolingDesc")}</span>
                 </div>
                 <button
                   type="button"
@@ -354,7 +352,7 @@ export const ConfigTab: React.FC = () => {
                     !disableCooling ? "bg-emerald-600 text-white" : "bg-rose-950 text-rose-300"
                   }`}
                 >
-                  {!disableCooling ? "启用 (推荐)" : "禁用"}
+                  {!disableCooling ? t("config.coolingEnabled") : t("config.coolingDisabled")}
                 </button>
               </div>
             </div>
@@ -365,9 +363,9 @@ export const ConfigTab: React.FC = () => {
             <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
               <Bug className="w-4 h-4 text-amber-400" />
               <div>
-                <h3 className="text-sm font-semibold text-white">排错与日志记录 (Logging)</h3>
+                <h3 className="text-sm font-semibold text-white">{t("config.logTitle")}</h3>
                 <p className="text-[11px] text-slate-400">
-                  控制后台输出详尽程度与日志落地。
+                  {t("config.logDesc")}
                 </p>
               </div>
             </div>
@@ -375,8 +373,8 @@ export const ConfigTab: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950 border border-slate-800">
                 <div>
-                  <span className="text-xs font-semibold text-slate-200 block">调试模式 (Debug Mode)</span>
-                  <span className="text-[11px] text-slate-500">控制台输出详细请求与指纹追踪日志</span>
+                  <span className="text-xs font-semibold text-slate-200 block">{t("config.debugModeLabel")}</span>
+                  <span className="text-[11px] text-slate-500">{t("config.debugModeDesc")}</span>
                 </div>
                 <button
                   type="button"
@@ -385,14 +383,14 @@ export const ConfigTab: React.FC = () => {
                     debugMode ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-400"
                   }`}
                 >
-                  {debugMode ? "已开启" : "已关闭"}
+                  {debugMode ? t("config.debugOn") : t("config.debugOff")}
                 </button>
               </div>
 
               <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950 border border-slate-800">
                 <div>
-                  <span className="text-xs font-semibold text-slate-200 block">落地写入日志文件</span>
-                  <span className="text-[11px] text-slate-500">将运行日志保存至 logs 目录</span>
+                  <span className="text-xs font-semibold text-slate-200 block">{t("config.logToFileLabel")}</span>
+                  <span className="text-[11px] text-slate-500">{t("config.logToFileDesc")}</span>
                 </div>
                 <button
                   type="button"
@@ -401,7 +399,7 @@ export const ConfigTab: React.FC = () => {
                     loggingToFile ? "bg-brand-600 text-white" : "bg-slate-800 text-slate-400"
                   }`}
                 >
-                  {loggingToFile ? "已开启" : "已关闭"}
+                  {loggingToFile ? t("config.debugOn") : t("config.debugOff")}
                 </button>
               </div>
             </div>
@@ -414,7 +412,7 @@ export const ConfigTab: React.FC = () => {
               disabled={loading || saving}
               className="px-4 py-2 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-300 transition"
             >
-              重置放弃更改
+              {t("config.resetBtn")}
             </button>
             <button
               onClick={handleSaveForm}
@@ -422,7 +420,7 @@ export const ConfigTab: React.FC = () => {
               className="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-lg shadow-brand-600/20 transition disabled:opacity-50"
             >
               {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              保存并热应用配置
+              {t("config.saveFormBtn")}
             </button>
           </div>
         </div>
@@ -433,8 +431,8 @@ export const ConfigTab: React.FC = () => {
             <div className="flex items-center gap-2">
               <FileCode className="w-4 h-4 text-brand-400" />
               <div>
-                <h3 className="font-semibold text-white text-sm">config.yaml 源码编辑器</h3>
-                <p className="text-[11px] text-slate-400">适合高级用户直接编辑底层完整 YAML 结构。</p>
+                <h3 className="font-semibold text-white text-sm">{t("config.yamlTitle")}</h3>
+                <p className="text-[11px] text-slate-400">{t("config.yamlDesc")}</p>
               </div>
             </div>
             <button
@@ -443,7 +441,7 @@ export const ConfigTab: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-lg shadow-brand-600/20 transition disabled:opacity-50"
             >
               {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              保存 YAML 配置
+              {t("config.saveYamlBtn")}
             </button>
           </div>
 
@@ -461,8 +459,3 @@ export const ConfigTab: React.FC = () => {
     </div>
   );
 };
-
-
-
-
-

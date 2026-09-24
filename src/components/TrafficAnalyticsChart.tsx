@@ -145,7 +145,7 @@ export const TrafficAnalyticsChart: React.FC<TrafficAnalyticsChartProps> = ({ au
       {/* SVG Chart Container */}
       {chartData.length === 0 ? (
         <div className="py-12 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-          暂无近期请求调用历史数据
+          {t("overview.emptyTraffic")}
         </div>
       ) : (
         <div className="relative rounded-xl bg-slate-950/70 border border-slate-800 p-4">
@@ -241,18 +241,18 @@ export const TrafficAnalyticsChart: React.FC<TrafficAnalyticsChartProps> = ({ au
               className="absolute top-2 right-4 p-2.5 rounded-xl bg-slate-900 border border-slate-700 shadow-xl text-[11px] font-mono pointer-events-none z-10 space-y-1 animate-in fade-in zoom-in-95 duration-100"
             >
               <div className="text-slate-400 font-semibold border-b border-slate-800 pb-1">
-                时段: {chartData[hoveredIndex].time}
+                {t("overview.timePeriod")}: {chartData[hoveredIndex].time}
               </div>
               <div className="flex items-center gap-2 text-emerald-400">
-                <span>成功:</span>
+                <span>{t("common.success")}:</span>
                 <span className="font-bold">{chartData[hoveredIndex].success} 次</span>
               </div>
               <div className="flex items-center gap-2 text-rose-400">
-                <span>失败:</span>
+                <span>{t("common.failed")}:</span>
                 <span className="font-bold">{chartData[hoveredIndex].failed} 次</span>
               </div>
               <div className="flex items-center gap-2 text-sky-400 font-bold pt-1 border-t border-slate-800">
-                <span>总计: {chartData[hoveredIndex].total} 次</span>
+                <span>{t("common.total")}: {chartData[hoveredIndex].total}</span>
               </div>
             </div>
           )}
@@ -264,7 +264,7 @@ export const TrafficAnalyticsChart: React.FC<TrafficAnalyticsChartProps> = ({ au
         <div className="pt-2 border-t border-slate-800/60">
           <div className="text-[11px] text-slate-400 font-medium mb-3 flex items-center gap-1.5">
             <Layers className="w-3.5 h-3.5 text-brand-400" />
-            <span>各模型渠道调用占比与成功率</span>
+            <span>{t("overview.providerShareTitle")}</span>
           </div>
           <div className="space-y-2.5">
             {Object.entries(providerStats).map(([p, stat]) => {
@@ -275,8 +275,8 @@ export const TrafficAnalyticsChart: React.FC<TrafficAnalyticsChartProps> = ({ au
                   <div className="flex items-center justify-between text-xs font-mono">
                     <span className="capitalize font-semibold text-slate-200">{p}</span>
                     <div className="flex items-center gap-3 text-[11px] text-slate-400">
-                      <span className="text-emerald-400">{stat.success} 成功</span>
-                      <span className="text-rose-400">{stat.failed} 失败</span>
+                      <span className="text-emerald-400">{stat.success} {t("common.success")}</span>
+                      <span className="text-rose-400">{stat.failed} {t("common.failed")}</span>
                       <span className="font-bold text-white">{share}% ({stat.total}次)</span>
                     </div>
                   </div>
@@ -295,3 +295,4 @@ export const TrafficAnalyticsChart: React.FC<TrafficAnalyticsChartProps> = ({ au
     </div>
   );
 };
+

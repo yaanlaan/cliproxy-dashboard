@@ -1,7 +1,8 @@
-import { copyToClipboard } from "../../utils/clipboard";
 import React, { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import { useApp } from "../../context/AppContext";
+import { useI18n } from "../../i18n";
+import { copyToClipboard } from "../../utils/clipboard";
 import {
   KeyRound,
   Plus,
@@ -12,11 +13,11 @@ import {
   Sparkles,
   Save,
   RefreshCw,
-  Terminal,
 } from "lucide-react";
 
 export const ApiKeysTab: React.FC = () => {
   const { addToast, serverUrl } = useApp();
+  const { t } = useI18n();
   const [keys, setKeys] = useState<string[]>([]);
   const [newKey, setNewKey] = useState<string>("");
   const [saving, setSaving] = useState<boolean>(false);
@@ -43,7 +44,7 @@ export const ApiKeysTab: React.FC = () => {
     const success = await copyToClipboard(text);
     if (success) {
       setCopiedText(label);
-      addToast("success", `已复制 ${label}`);
+      addToast("success", `${t("common.copied")} ${label}`);
       setTimeout(() => setCopiedText(null), 2000);
     } else {
       addToast("error", "复制失败，请手动选中文本复制");
@@ -75,7 +76,7 @@ export const ApiKeysTab: React.FC = () => {
     setSaving(true);
     try {
       await api.updateAPIKeys(keys);
-      addToast("success", "客户端 API Key 已成功保存");
+      addToast("success", t("common.saveSuccess"));
     } catch (e: any) {
       addToast("error", `保存失败: ${e.message}`);
     } finally {
@@ -84,7 +85,7 @@ export const ApiKeysTab: React.FC = () => {
   };
 
   const currentBaseUrl = (serverUrl || "http://127.0.0.1:8317") + "/v1";
-  const sampleKey = keys[0] || "your-api-key";
+  const sampleKey = keys[0] || "sk-cpa-master-key";
 
   const snippets: Record<string, { label: string; code: string }> = {
     cursor: {
@@ -97,7 +98,7 @@ Base URL: ${currentBaseUrl}
 claude-3-7-sonnet
 gpt-5-codex
 gemini-2.5-flash
-grok-4.5`,
+gemini-3.8-flash-high`,
     },
     claudeCode: {
       label: "Claude Code CLI",
@@ -118,7 +119,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="claude-3-7-sonnet",
+    model="gemini-3.8-flash-high",
     messages=[{"role": "user", "content": "Hello!"}]
 )
 print(response.choices[0].message.content)`,
@@ -129,7 +130,7 @@ print(response.choices[0].message.content)`,
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer ${sampleKey}" \\
   -d '{
-    "model": "claude-3-7-sonnet",
+    "model": "gemini-3.8-flash-high",
     "messages": [{"role": "user", "content": "Hello!"}],
     "stream": true
   }'`,
@@ -144,9 +145,9 @@ print(response.choices[0].message.content)`,
           <div className="flex items-center gap-2">
             <KeyRound className="w-5 h-5 text-brand-400" />
             <div>
-              <h3 className="font-semibold text-white text-sm">下游客户端访问密钥 (API Keys)</h3>
+              <h3 className="font-semibold text-white text-sm">{t("keys.title")}</h3>
               <p className="text-[11px] text-slate-400">
-                供 Cursor、Continue、Cline、脚本等第三方应用调用 CLIProxyAPI 时的身份验证。
+                {t("keys.desc")}
               </p>
             </div>
           </div>
@@ -165,28 +166,28 @@ print(response.choices[0].message.content)`,
             type="text"
             value={newKey}
             onChange={(e) => setNewKey(e.target.value)}
-            placeholder="输入自定义 API Key 或点击生成..."
+            placeholder={t("keys.addPlaceholder")}
             className="flex-1 rounded-xl bg-slate-950 border border-slate-800 px-4 py-2 text-xs text-slate-100 placeholder-slate-500 font-mono focus:outline-none focus:border-brand-500 transition"
           />
           <button
             onClick={handleGenerateKey}
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-850 border border-slate-800 hover:bg-slate-800 text-xs font-medium text-slate-300 transition"
           >
-            <Sparkles className="w-3.5 h-3.5 text-brand-400" /> 随机生成
+            <Sparkles className="w-3.5 h-3.5 text-brand-400" /> {t("keys.generate")}
           </button>
           <button
             onClick={handleAddKey}
             disabled={!newKey.trim()}
             className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-xs font-semibold text-white transition disabled:opacity-50"
           >
-            <Plus className="w-3.5 h-3.5" /> 添加到列表
+            <Plus className="w-3.5 h-3.5" /> {t("keys.addBtn")}
           </button>
         </div>
 
         {/* Keys List */}
         {keys.length === 0 ? (
           <div className="py-8 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl mb-4">
-            尚未配置任何 API Key。如需对下游调用鉴权，请至少添加一个密钥。
+            {t("keys.emptyKeys")}
           </div>
         ) : (
           <div className="space-y-2 mb-5">
@@ -203,7 +204,7 @@ print(response.choices[0].message.content)`,
                   <button
                     onClick={() => handleCopy(k, `Key #${idx + 1}`)}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
-                    title="复制 Key"
+                    title={t("common.copy")}
                   >
                     {copiedText === `Key #${idx + 1}` ? (
                       <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -214,7 +215,7 @@ print(response.choices[0].message.content)`,
                   <button
                     onClick={() => handleRemoveKey(idx)}
                     className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition"
-                    title="删除 Key"
+                    title={t("common.delete")}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -231,7 +232,7 @@ print(response.choices[0].message.content)`,
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-lg shadow-brand-600/20 transition disabled:opacity-50"
           >
             {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-            保存全部密钥
+            {t("keys.saveAll")}
           </button>
         </div>
       </div>
@@ -241,9 +242,9 @@ print(response.choices[0].message.content)`,
         <div className="flex items-center gap-2 mb-4">
           <Code2 className="w-5 h-5 text-brand-400" />
           <div>
-            <h3 className="font-semibold text-white text-sm">客户端接入示例与快捷配置</h3>
+            <h3 className="font-semibold text-white text-sm">{t("keys.quickstartTitle")}</h3>
             <p className="text-[11px] text-slate-400">
-              只需将 Base URL 与 API Key 填入支持 OpenAI / Anthropic 协议的应用中即可无缝使用。
+              {t("keys.quickstartDesc")}
             </p>
           </div>
         </div>
@@ -273,11 +274,11 @@ print(response.choices[0].message.content)`,
           >
             {copiedText === snippets[activeSnippetTab].label ? (
               <>
-                <Check className="w-3 h-3 text-emerald-400" /> 已复制
+                <Check className="w-3 h-3 text-emerald-400" /> {t("common.copied")}
               </>
             ) : (
               <>
-                <Copy className="w-3 h-3" /> 复制代码
+                <Copy className="w-3 h-3" /> {t("common.copy")}
               </>
             )}
           </button>
@@ -287,4 +288,3 @@ print(response.choices[0].message.content)`,
     </div>
   );
 };
-

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import { useApp } from "../../context/AppContext";
+import { useI18n } from "../../i18n";
 import { ModelAliasMap, ModelItem } from "../../types";
 import {
   GitBranch,
@@ -16,6 +17,7 @@ import {
 
 export const RoutingTab: React.FC = () => {
   const { addToast } = useApp();
+  const { t } = useI18n();
   const [strategy, setStrategy] = useState<string>("round-robin");
   const [savingStrategy, setSavingStrategy] = useState<boolean>(false);
 
@@ -58,7 +60,7 @@ export const RoutingTab: React.FC = () => {
     setSavingStrategy(true);
     try {
       await api.updateRoutingStrategy(strategy);
-      addToast("success", `调度策略已更新为: ${strategy}`);
+      addToast("success", `${t("routing.saveStrategy")}: ${strategy}`);
     } catch (e: any) {
       addToast("error", `保存失败: ${e.message}`);
     } finally {
@@ -92,7 +94,7 @@ export const RoutingTab: React.FC = () => {
         }
       }
       await api.updateOAuthModelAlias(map);
-      addToast("success", "模型别名映射已成功保存");
+      addToast("success", t("common.saveSuccess"));
     } catch (e: any) {
       addToast("error", `保存模型别名失败: ${e.message}`);
     } finally {
@@ -106,29 +108,29 @@ export const RoutingTab: React.FC = () => {
       <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80">
         <div className="flex items-center gap-2 mb-4">
           <GitBranch className="w-5 h-5 text-brand-400" />
-          <h3 className="font-semibold text-white text-sm">多账号调度与轮询策略</h3>
+          <h3 className="font-semibold text-white text-sm">{t("routing.title")}</h3>
         </div>
 
         <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-          当凭据池中拥有多个同提供商账号时，CLIProxyAPI 会依据该策略分派请求。若遇到限流 (429) 或配额超限，系统会自动转入冷却并将请求快速故障转移至下一账号。
+          {t("routing.desc")}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
           {[
             {
               id: "round-robin",
-              name: "轮询调度 (Round Robin)",
-              desc: "均匀循环依次调用各可用账号，平衡各账号负载",
+              name: t("routing.strategyRR"),
+              desc: t("routing.strategyRRDesc"),
             },
             {
               id: "weighted-round-robin",
-              name: "加权轮询 (Weighted)",
-              desc: "依据每个凭据配置的权重 (weight) 按比例分派请求",
+              name: t("routing.strategyWRR"),
+              desc: t("routing.strategyWRRDesc"),
             },
             {
               id: "fill-first",
-              name: "顺序占满 (Fill First)",
-              desc: "优先使用首个可用账号，直到触发限流后再切换到下一个",
+              name: t("routing.strategyFF"),
+              desc: t("routing.strategyFFDesc"),
             },
           ].map((item) => (
             <div
@@ -156,7 +158,7 @@ export const RoutingTab: React.FC = () => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-lg shadow-brand-600/20 transition disabled:opacity-50"
           >
             {savingStrategy ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-            保存调度策略
+            {t("routing.saveStrategy")}
           </button>
         </div>
       </div>
@@ -167,9 +169,9 @@ export const RoutingTab: React.FC = () => {
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-brand-400" />
             <div>
-              <h3 className="font-semibold text-white text-sm">模型别名映射 (Model Aliases)</h3>
+              <h3 className="font-semibold text-white text-sm">{t("routing.aliasTitle")}</h3>
               <p className="text-[11px] text-slate-400">
-                将客户端请求的模型名称自动重写映射至上游真实模型。例如客户端请求 <code className="text-brand-300">gpt-4o</code> 可映射为 <code className="text-brand-300">gpt-5-codex</code>。
+                {t("routing.aliasDesc")}
               </p>
             </div>
           </div>
@@ -177,13 +179,13 @@ export const RoutingTab: React.FC = () => {
             onClick={handleAddAlias}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800 text-xs font-medium text-slate-200 transition"
           >
-            <Plus className="w-3.5 h-3.5" /> 添加映射
+            <Plus className="w-3.5 h-3.5" /> {t("routing.addAlias")}
           </button>
         </div>
 
         {aliases.length === 0 ? (
           <div className="py-8 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-            暂无自定义模型别名映射
+            {t("routing.emptyAlias")}
           </div>
         ) : (
           <div className="space-y-2.5 mb-5">
@@ -193,7 +195,7 @@ export const RoutingTab: React.FC = () => {
                   type="text"
                   value={clientModel}
                   onChange={(e) => handleAliasChange(idx, 0, e.target.value)}
-                  placeholder="客户端请求模型名 (Alias)"
+                  placeholder={t("routing.aliasClientPlaceholder")}
                   className="flex-1 rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 font-mono focus:outline-none focus:border-brand-500 transition"
                 />
                 <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
@@ -201,7 +203,7 @@ export const RoutingTab: React.FC = () => {
                   type="text"
                   value={upstreamModel}
                   onChange={(e) => handleAliasChange(idx, 1, e.target.value)}
-                  placeholder="真实上游模型名 (Target)"
+                  placeholder={t("routing.aliasTargetPlaceholder")}
                   className="flex-1 rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 font-mono focus:outline-none focus:border-brand-500 transition"
                 />
                 <button
@@ -222,7 +224,7 @@ export const RoutingTab: React.FC = () => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-lg shadow-brand-600/20 transition disabled:opacity-50"
           >
             {savingAliases ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-            保存别名映射
+            {t("routing.saveAliases")}
           </button>
         </div>
       </div>
@@ -233,7 +235,7 @@ export const RoutingTab: React.FC = () => {
           <div className="flex items-center gap-2">
             <Box className="w-5 h-5 text-brand-400" />
             <h3 className="font-semibold text-white text-sm">
-              当前可用模型列表 ({models.length})
+              {t("routing.availableModelsTitle")} ({models.length})
             </h3>
           </div>
           <button
@@ -246,10 +248,10 @@ export const RoutingTab: React.FC = () => {
         </div>
 
         {loadingModels ? (
-          <div className="py-8 text-center text-slate-500 text-xs">加载模型列表中...</div>
+          <div className="py-8 text-center text-slate-500 text-xs">{t("common.loading")}</div>
         ) : models.length === 0 ? (
           <div className="py-8 text-center text-slate-500 text-xs">
-            暂无模型返回，请检查服务连接与账号池状态
+            {t("routing.emptyModels")}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">

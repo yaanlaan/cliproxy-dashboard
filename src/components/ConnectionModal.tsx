@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
+import { useI18n } from "../i18n";
 import { api } from "../services/api";
 import { X, CheckCircle2, AlertCircle, RefreshCw, Key, Globe } from "lucide-react";
 
@@ -14,6 +15,7 @@ export const ConnectionModal: React.FC = () => {
     refreshAll,
     addToast,
   } = useApp();
+  const { t } = useI18n();
 
   const [inputUrl, setInputUrl] = useState(serverUrl);
   const [inputKey, setInputKey] = useState(secretKey);
@@ -34,7 +36,7 @@ export const ConnectionModal: React.FC = () => {
 
       const health = await api.checkHealth();
       if (!health.ok) {
-        setTestResult({ ok: false, message: "服务不可达，请检查地址是否正确" });
+        setTestResult({ ok: false, message: t("connection.failMsg") });
         api.setServerUrl(prevUrl);
         api.setSecretKey(prevKey);
         return;
@@ -43,7 +45,7 @@ export const ConnectionModal: React.FC = () => {
       // Test management authorization by calling a management endpoint
       try {
         await api.listAuthFiles();
-        setTestResult({ ok: true, message: `连接成功 (延迟: ${health.latencyMs}ms, 鉴权通过)` });
+        setTestResult({ ok: true, message: t("connection.successMsg", { latency: health.latencyMs }) });
       } catch (err: any) {
         setTestResult({
           ok: false,
@@ -64,7 +66,7 @@ export const ConnectionModal: React.FC = () => {
     setServerUrl(inputUrl);
     setSecretKey(inputKey);
     setIsConnectionModalOpen(false);
-    addToast("success", "连接配置已更新");
+    addToast("success", t("common.saveSuccess"));
     await refreshAll();
   };
 
@@ -74,7 +76,7 @@ export const ConnectionModal: React.FC = () => {
         <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-brand-500" />
-            <h3 className="text-lg font-semibold text-white">CLIProxyAPI 服务连接设置</h3>
+            <h3 className="text-lg font-semibold text-white">{t("connection.title")}</h3>
           </div>
           <button
             onClick={() => setIsConnectionModalOpen(false)}
@@ -88,34 +90,34 @@ export const ConnectionModal: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
               <Globe className="w-4 h-4 text-slate-400" />
-              服务接口地址 (Host URL)
+              {t("connection.hostLabel")}
             </label>
             <input
               type="text"
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
-              placeholder="http://127.0.0.1:8317 (留空则使用当前访问域名)"
+              placeholder={t("connection.hostPlaceholder")}
               className="w-full rounded-xl bg-slate-950 border border-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition"
             />
             <p className="mt-1 text-xs text-slate-500">
-              CLIProxyAPI 默认监听 8317 端口。如前端与服务在同一主机，可直接保持默认或当前域名。
+              {t("connection.hostHelp")}
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
               <Key className="w-4 h-4 text-slate-400" />
-              管理密钥 (Management Secret Key)
+              {t("connection.keyLabel")}
             </label>
             <input
               type="password"
               value={inputKey}
               onChange={(e) => setInputKey(e.target.value)}
-              placeholder="config.yaml 中 remote-management.secret-key 的值"
+              placeholder={t("connection.keyPlaceholder")}
               className="w-full rounded-xl bg-slate-950 border border-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition"
             />
             <p className="mt-1 text-xs text-slate-500">
-              用于访问 /v0/management 管理接口。仅在本地浏览器加密存储。
+              {t("connection.keyHelp")}
             </p>
           </div>
 
@@ -145,7 +147,7 @@ export const ConnectionModal: React.FC = () => {
             className="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700 transition disabled:opacity-50"
           >
             {testing && <RefreshCw className="w-4 h-4 animate-spin" />}
-            测试连通性
+            {t("connection.testBtn")}
           </button>
           <div className="flex items-center gap-3">
             <button
@@ -153,14 +155,14 @@ export const ConnectionModal: React.FC = () => {
               onClick={() => setIsConnectionModalOpen(false)}
               className="rounded-xl px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition"
             >
-              取消
+              {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleSave}
               className="rounded-xl bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-500 transition shadow-lg shadow-brand-600/20"
             >
-              保存并连接
+              {t("connection.saveBtn")}
             </button>
           </div>
         </div>
